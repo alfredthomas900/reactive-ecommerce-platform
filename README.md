@@ -299,28 +299,30 @@ reactive-commerce-platform/
 
 # 🎯 Platform Objectives
 
-* Enterprise-grade layered architecture
-* Clear service boundary enforcement
-* Durable vs ephemeral state separation
-* Fully reactive distributed system design
-* Secure checkout boundary
-* Idempotent financial transaction handling
+This platform demonstrates:
+
+- **Enterprise-grade layered architecture** with clean, directional dependencies.
+- Strict **service boundary enforcement** and DDD-style bounded contexts for cart, product, inventory, payment, and checkout.
+- Clear **durable vs ephemeral state separation** with MongoDB as system of record and Redis for experience-level caching and sessions.
+- Fully **reactive distributed system design** using Spring WebFlux and reactive drivers.
+- A clearly defined **Secure Checkout Boundary** managed by `core-checkout`.
+- **Idempotent financial transaction handling** centralized in `core-payment`.
 
 ---
 
 # 🚀 Future Evolution
 
-* Saga compensation framework
-* Kafka-based event-driven architecture
-* Promotion engine
-* Circuit breakers (Resilience4j)
-* Distributed tracing (OpenTelemetry)
-* Authentication & authorization
-* core-order immutable ledger service
+- **Saga compensation logic** across `orch-buy-*` services for robust failure handling.
+- **Event-driven architecture (Kafka)** for stock events, payment events, and order lifecycle events.
+- **Promotion engine** integrated with `orch-price` / future `core-price` for discounts and coupons.
+- **Circuit breakers & resilience patterns** (Resilience4j) around all cross-service calls.
+- **Distributed tracing & observability** (OpenTelemetry, Grafana, Prometheus, log aggregation) for end-to-end request visibility.
+- **Authentication & authorization** at the API Gateway and service levels.
+- Potential **core-order** service as an immutable order ledger backed by its own store.
 
 ---
 
 # 👨‍💻 Author
 
-Alfred Thomas
+Alfred Thomas  
 Senior Java Backend Developer

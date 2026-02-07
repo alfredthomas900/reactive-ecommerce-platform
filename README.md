@@ -1,167 +1,297 @@
-# 🛒 Reactive E-Commerce Microservices Platform
+# 🛒 Reactive E-Commerce Platform
 
-A production-style **Reactive Microservices-based E-Commerce Backend System** built using **Spring Boot 3, Spring WebFlux, Reactive MongoDB, and Gradle (Groovy DSL)**.
+An enterprise-inspired **Reactive Microservices E-Commerce Platform** built using:
 
-This project demonstrates:
+- Spring Boot 3
+- Spring WebFlux
+- Reactive MongoDB
+- Gradle (Groovy DSL)
+- Project Reactor
 
-- Reactive programming using Project Reactor
-- Microservices architecture
-- Service-to-service communication using WebClient
-- Database per service design
-- Idempotent payment processing
-- Clean orchestration flow
-- Saga-ready distributed transaction design (Phase 2)
+This platform demonstrates layered microservices architecture with clear separation between:
+
+- Core Domain Services
+- Orchestration (Experience) Layer
+- Infrastructure Layer
+
+Designed for evolutionary growth toward distributed Saga-based transaction management.
 
 ---
 
 # 🏗️ Architecture Overview
 
-Current Phase (REST Orchestration Based)
+This system follows a layered architecture:
 
-                ┌──────────────────┐
-                │  Product Service │ (8081)
-                └─────────┬────────┘
-                          │
-                ┌─────────▼────────┐
-                │   Cart Service   │ (8082)
-                └─────────┬────────┘
-                          │
-                ┌─────────▼────────┐
-                │  Order Service   │ (8083)
-                └─────────┬────────┘
-                          │
-                ┌─────────▼────────┐
-                │ Payment Service  │ (8084)
-                └──────────────────┘
-
-MongoDB (Single Instance)
-mongodb://localhost:27017
-
-- productdb
-- cartdb
-- orderdb
-- paymentdb
-
-Each microservice owns its database.
+```
+                        ┌────────────────────┐
+                        │     API Gateway    │
+                        └─────────┬──────────┘
+                                  │
+     ┌────────────────────────────┼────────────────────────────┐
+     │                            │                            │
+orch-buy-cart             orch-buy-checkout              orch-buy-order
+     │                            │                            │
+     └───────────────┬────────────┼───────────────┬────────────┘
+                     │            │               │
+                orch-price     core-inventory   core-payment
+                     │
+               core-product
+```
 
 ---
 
-# 🚀 Tech Stack
+# 📂 Project Structure
 
-- Java 17
-- Spring Boot 3
-- Spring WebFlux (Reactive)
-- Reactive MongoDB
-- Gradle (Groovy DSL)
-- Project Reactor (Mono / Flux)
-- WebClient (Inter-service communication)
-- Docker (Planned)
-- Kafka (Planned – Saga Phase)
-
----
-
-# 📦 Services
-
-## 1️⃣ Product Service (Port 8081)
-
-**Database:** `productdb`  
-**Collection:** `products`
-
-### Responsibilities:
-- Create product
-- Fetch product
-- Manage stock (basic)
-- Acts as catalog service
-
-Reactive CRUD using `ReactiveMongoRepository`.
+```
+reactive-commerce-platform/
+│
+├── core/
+│     ├── core-product
+│     ├── core-payment
+│     └── core-inventory
+│
+├── orch/
+│     └── orch-buy/
+│           ├── orch-buy-cart
+│           ├── orch-buy-checkout
+│           ├── orch-buy-order
+│           └── orch-price
+│
+├── infra/
+│     └── api-gateway
+│
+└── README.md
+```
 
 ---
 
-## 2️⃣ Cart Service (Port 8082)
+# 🧠 Architectural Philosophy
 
-**Database:** `cartdb`  
-**Collection:** `carts`
+This platform is built around the following principles:
 
-### Responsibilities:
+- Reactive-first design (non-blocking IO)
+- Database per service
+- Clear separation of orchestration and domain logic
+- Centralized pricing computation
+- Idempotent payment handling
+- Evolution-ready Saga orchestration
+- Service boundary discipline (Core never depends on Orch)
+
+---
+
+# 🔹 Core Layer (Domain Ownership)
+
+Core services own business logic and data.
+
+---
+
+## core-product
+
+**Database:** `productdb`
+
+Responsibilities:
+- Manage product catalog
+- Provide product data for pricing
+- Maintain stock metadata (not reservation)
+
+---
+
+## core-inventory
+
+**Database:** `inventorydb`
+
+Responsibilities:
+- Reserve stock
+- Release stock
+- Prevent overselling
+- Maintain stock state
+
+---
+
+## core-payment
+
+**Database:** `paymentdb`
+
+Responsibilities:
+- Idempotent payment processing
+- Transaction audit storage
+- Refund capability (future phase)
+
+Key Feature:
+- Payment requests with same idempotency key are processed only once.
+
+---
+
+# 🔹 Orchestration Layer (Buy Experience)
+
+Orch services coordinate flows but do not own domain logic.
+
+---
+
+## orch-buy-cart
+
+**Database:** `cartdb`
+
+Responsibilities:
 - Create cart
-- Add items to cart
-- Fetch cart
-- Calculate total
-- Calls Product Service using WebClient
-
-Important design decision:
-- Product price snapshot is stored in cart
-- Prevents price inconsistency later
+- Add/remove items
+- Request pricing from orch-price
+- Store pricing snapshot
+- Maintain cart lifecycle
 
 ---
 
-## 3️⃣ Order Service (Port 8083)
+## orch-buy-checkout
 
-**Database:** `orderdb`  
-**Collection:** `orders`
+Responsibilities:
+- Validate cart
+- Request final pricing from orch-price
+- Reserve inventory via core-inventory
+- Initiate idempotent payment via core-payment
+- Coordinate distributed flow
+- Trigger order creation
 
-### Responsibilities:
-- Fetch cart
-- Process payment
-- Create order
-- Update order status
+Designed to evolve into Saga Orchestrator.
+
+---
+
+## orch-buy-order
+
+**Database:** `orderdb`
+
+Responsibilities:
+- Create order record
+- Maintain order state
+- Track lifecycle transitions
 
 Order Status Flow:
 - CREATED
 - CONFIRMED
 - PAYMENT_FAILED
-
-Acts as orchestration layer in Phase 1.
-
----
-
-## 4️⃣ Payment Service (Port 8084)
-
-**Database:** `paymentdb`  
-**Collection:** `payments`
-
-### Responsibilities:
-- Process payment (Mock Gateway)
-- Idempotency validation
-- Store audit record
-- Return consistent response
-
-Implements idempotent payment handling.
+- CANCELLED (future)
 
 ---
 
-# 🔐 Idempotency (Important Design Feature)
+## orch-price
 
-If a payment request is sent multiple times with the same idempotency key:
+Centralized pricing computation service.
 
-- Payment is processed only once
-- Existing result is returned
-- Prevents double charging
+Responsibilities:
+- Compute item totals
+- Calculate shipping fee
+- Apply tax (mock in Phase 1)
+- Apply discounts (initially zero)
+- Return structured pricing breakdown
 
-This is critical in distributed systems and fintech-grade applications.
+Pricing Response Example:
+
+```json
+{
+  "itemsTotal": 1000,
+  "shippingFee": 100,
+  "tax": 90,
+  "discount": 0,
+  "grandTotal": 1190,
+  "currency": "INR"
+}
+```
+
+Future Evolution:
+- Promotion engine integration
+- Coupon engine
+- Loyalty pricing
+- External tax provider integration (Vertex/Avalara)
+- Dedicated `core-price` service
 
 ---
 
-# 📚 Design Patterns Used
+# 🌐 Infrastructure Layer
+
+## API Gateway
+
+Implemented using Spring Cloud Gateway.
+
+Responsibilities:
+- Central routing entry point
+- Request forwarding to orch services
+- Future:
+    - JWT validation
+    - Rate limiting
+    - API versioning
+    - Observability hooks
+
+In enterprise deployments, this layer may be replaced by:
+- Apigee
+- Kong
+- AWS API Gateway
+- Azure API Management
+
+---
+
+# 🔄 Service Interaction Flow
+
+## Add to Cart
+
+Client  
+→ API Gateway  
+→ orch-buy-cart  
+→ orch-price  
+→ core-product
+
+---
+
+## Checkout Flow
+
+Client  
+→ API Gateway  
+→ orch-buy-checkout
+
+Checkout orchestrates:
+
+1. Pricing calculation (orch-price)
+2. Inventory reservation (core-inventory)
+3. Payment processing (core-payment)
+4. Order creation (orch-buy-order)
+
+---
+
+# 🔐 Idempotency
+
+Payment processing is idempotent.
+
+If the same idempotency key is received multiple times:
+
+- The payment is processed only once.
+- The original response is returned.
+- Prevents double charging.
+
+Critical for distributed systems and financial reliability.
+
+---
+
+# 📚 Design Patterns Applied
 
 - Microservices Architecture
+- Layered Orch + Core Separation
 - Database per Service
 - Adapter Pattern (Payment Gateway ready)
 - Orchestration Pattern
 - Idempotency Handling
-- Reactive Programming Model
-- Non-blocking IO
 - Snapshot Strategy (Cart pricing)
+- Reactive Composition (Mono / Flux pipelines)
 
 ---
 
-# 🧠 Reactive Programming Principles Followed
+# ⚙️ Tech Stack
 
-- No blocking calls
-- No `.block()`
-- End-to-end non-blocking pipelines
-- Mono and Flux composition
-- WebClient for async inter-service calls
+- Java 17
+- Spring Boot 3
+- Spring WebFlux
+- Reactive MongoDB
+- Gradle (Groovy DSL)
+- Project Reactor
+- WebClient
+- Spring Cloud Gateway (API layer)
 
 ---
 
@@ -169,9 +299,9 @@ This is critical in distributed systems and fintech-grade applications.
 
 ## 1️⃣ Start MongoDB
 
-Using Docker:
-
+```bash
 docker run -d -p 27017:27017 --name mongo mongo
+```
 
 ---
 
@@ -179,73 +309,51 @@ docker run -d -p 27017:27017 --name mongo mongo
 
 Inside each service directory:
 
+```bash
 ./gradlew bootRun
+```
 
 ---
 
-# 🧪 Sample Flow
-
-1. Create Product
-2. Create Cart
-3. Add Product to Cart
-4. Create Order
-5. Payment Processed
-6. Order Confirmed
-
----
-
-# 📈 Future Enhancements (Planned Phases)
+# 🚀 Future Enhancements
 
 ## Phase 2 – Distributed Transactions
-- Inventory Service
-- Saga Pattern (Orchestration)
-- Compensation logic (Refund + Stock release)
+- Saga orchestration
+- Compensation logic (inventory release + refund)
+- Failure recovery handling
 
-## Phase 3 – Event Driven Architecture
-- Kafka Integration
+## Phase 3 – Event-Driven Architecture
+- Kafka integration
 - Choreography Saga
-- Order Events
+- Order domain events
 
-## Phase 4 – Resilience
+## Phase 4 – Platform Resilience
 - Circuit Breaker
-- Retry mechanism
-- Timeout handling
+- Retry policies
+- Timeout management
 
-## Phase 5 – Platform Enhancements
-- API Gateway (Spring Cloud Gateway)
-- Service Discovery
-- Centralized Logging
-- Distributed Tracing
-- JWT Authentication
-
----
-
-# 🏛️ Architectural Principles Followed
-
-- Clean service boundaries
-- No shared entity models across services
-- Reactive-first development
-- Evolutionary design (iterative improvement)
-- Production-ready thinking
+## Phase 5 – Platform Maturity
+- Redis caching
+- Distributed tracing
+- Centralized logging
+- JWT authentication
+- Metrics & monitoring
 
 ---
 
-# 🎯 Project Goal
+# 🎯 Project Objective
 
-This project is built to:
+This platform demonstrates:
 
-- Deeply understand reactive microservices
-- Demonstrate real distributed system thinking
-- Implement payment-grade idempotency
-- Build Saga-based transactional consistency
-- Serve as a production-style portfolio project
+- Enterprise-grade architectural thinking
+- Reactive distributed systems design
+- Clear domain boundary enforcement
+- Evolutionary microservices architecture
+- Orchestration and domain separation strategy
 
 ---
 
 # 👨‍💻 Author
 
 Alfred Thomas  
-Senior Java Backend Developer  
-
----
-
+Senior Java Backend Developer

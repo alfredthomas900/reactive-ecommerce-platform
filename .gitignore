@@ -1,0 +1,9 @@
+.gradle/
+build/
+*.log
+/.idea
+/.idea/gradle.xml
+/.idea/misc.xml
+/.idea/workspace.xml
+*.iml
+.DS_Store

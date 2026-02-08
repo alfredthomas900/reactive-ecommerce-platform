@@ -15,7 +15,7 @@ Collection: `carts`
 - Add items to cart
 - Fetch cart
 - Maintain pricing snapshot
-- Calls Product Service via WebClient
+- Calls the downstream service core-product via WebClient
 
 ## Design Decisions
 - Product snapshot stored in cart

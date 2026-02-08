@@ -38,3 +38,11 @@ POST /carts/{cartId}/items?productId={id}&quantity=1
 
 Get Cart  
 GET /carts/{cartId}
+
+# 🔒 Core Layer Principles
+
+- Each service owns its persistence
+- No cross-core service calls
+- No orchestration logic inside core services
+- Fully reactive and non-blocking
+- Independently deployable and scalable

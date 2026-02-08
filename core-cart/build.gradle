@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.ecommerce'
 version = '0.0.1-SNAPSHOT'
-description = 'Reactive Cart Management Microservice.'
+description = 'Reactive Cart Management Microservice'
 
 java {
 	toolchain {

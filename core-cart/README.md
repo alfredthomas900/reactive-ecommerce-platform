@@ -1,6 +1,6 @@
 # 🛒 core-cart
 
-Reactive Cart Management Microservice.
+Reactive Cart Management Microservice
 
 ## Port
 8082

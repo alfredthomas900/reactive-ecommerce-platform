@@ -1,6 +1,6 @@
 # 📦 core-order
 
-Reactive Order Management Microservice.
+Reactive Order Management Microservice
 
 ## Port
 8086

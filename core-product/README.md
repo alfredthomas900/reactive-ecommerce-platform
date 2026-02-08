@@ -1,6 +1,6 @@
 # 📦 core-product
 
-Reactive Product Catalog Microservice.
+Reactive Product Catalog Microservice
 
 ## Port
 8081
@@ -36,3 +36,11 @@ GET /products/{productId}
 
 Bulk Fetch  
 GET /products?ids={id1,id2,id3}
+
+# 🔒 Core Layer Principles
+
+- Each service owns its persistence
+- No cross-core service calls
+- No orchestration logic inside core services
+- Fully reactive and non-blocking
+- Independently deployable and scalable

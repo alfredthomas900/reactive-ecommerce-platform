@@ -67,6 +67,7 @@ This document is structured as a lightweight **Architecture Design Document (ADD
    core-cart                   core-payment                 core-payment
    core-inventory              core-checkout                core-inventory
    orch-price                  orch-price                   core-checkout
+                                                              core-order
    Redis (cart cache)                                      Redis (order cache)
 
         ───────────────────────── CORE LAYER ─────────────────────────
@@ -75,7 +76,9 @@ This document is structured as a lightweight **Architecture Design Document (ADD
    core-cart      ──► MongoDB (cartdb)
    core-inventory ──► MongoDB (inventorydb)
    core-payment   ──► MongoDB (paymentdb)
+   core-order     ──► MongoDB (orderdb)
    core-checkout  ──► Redis (checkout sessions)
+
 ```
 
 ---
@@ -83,21 +86,22 @@ This document is structured as a lightweight **Architecture Design Document (ADD
 ## C3 — Component Example (orch-buy-order)
 
 ```
-                    ┌──────────────────────────┐
-                    │   OrderController        │
-                    └─────────────┬────────────┘
-                                  │
-                                  ▼
-                    ┌──────────────────────────┐
-                    │ OrderOrchestrationService│
-                    └─────────────┬────────────┘
-                                  │
-         ┌──────────────┬──────────────┬──────────────┬──────────────┐
-         ▼              ▼              ▼              ▼              ▼
-   PricingClient   InventoryClient   PaymentClient   CheckoutClient   CartClient
-                                  │
-                                  ▼
-                          RedisOrderCache
+                        ┌──────────────────────────┐
+                        │   OrderController        │
+                        └─────────────┬────────────┘
+                                      │
+                                      ▼
+                        ┌──────────────────────────┐
+                        │ OrderOrchestrationService│
+                        └─────────────┬────────────┘
+                                      │
+       ┌──────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
+       ▼              ▼              ▼              ▼              ▼              ▼
+PricingClient  InventoryClient  PaymentClient  CheckoutClient  CartClient  CoreOrderClient
+                                      │
+                                      ▼
+                              RedisOrderCache
+
 ```
 
 ---
@@ -231,6 +235,7 @@ orch-buy-order
    ├──► orch-price (final pricing)
    ├──► core-inventory (reserve stock)
    ├──► core-payment (capture payment)
+   ├──► core-order (persist order)
    ├──► core-cart (finalize cart)
    └──► Redis (order confirmation cache)
 ```
@@ -249,6 +254,7 @@ reactive-commerce-platform/
 │     ├── core-cart           (Mongo)
 │     ├── core-inventory      (Mongo)
 │     ├── core-payment        (Mongo + Gateway)
+│     ├── core-order          (Mongo)
 │     └── core-checkout       (Redis session)
 │
 ├── orch/
@@ -295,6 +301,11 @@ reactive-commerce-platform/
 **Decision:** All payment operations require idempotency keys.
 **Reason:** Prevent double charges during retries.
 
+## ADR-006: Immutable Order Ledger
+
+**Decision:** Introduce core-order as dedicated order persistence service.
+**Reason:** Separate finalized transactional state from cart lifecycle and enable future event-driven extensions.
+
 ---
 
 # 🎯 Platform Objectives
@@ -307,6 +318,7 @@ This platform demonstrates:
 - Fully **reactive distributed system design** using Spring WebFlux and reactive drivers.
 - A clearly defined **Secure Checkout Boundary** managed by `core-checkout`.
 - **Idempotent financial transaction handling** centralized in `core-payment`.
+- A clean **immutable order boundary** managed by `core-order`.
 
 ---
 

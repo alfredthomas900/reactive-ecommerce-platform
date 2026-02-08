@@ -1,6 +1,6 @@
 # 🔐 core-checkout
 
-Reactive Checkout Session Microservice.
+Reactive Checkout Session Microservice
 
 ## Port
 8085

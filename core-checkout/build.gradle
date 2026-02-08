@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.ecommerce'
 version = '0.0.1-SNAPSHOT'
-description = 'Reactive Checkout Session Microservice.'
+description = 'Reactive Checkout Session Microservice'
 
 java {
 	toolchain {

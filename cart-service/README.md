@@ -1,4 +1,4 @@
-# Cart Service
+# 🛒 core-cart
 
 Reactive Cart Management Microservice.
 
@@ -6,20 +6,21 @@ Reactive Cart Management Microservice.
 8082
 
 ## Database
-MongoDB
-Database: cartdb
-Collection: carts
+MongoDB  
+Database: `cartdb`  
+Collection: `carts`
 
 ## Responsibilities
 - Create cart
 - Add items to cart
 - Fetch cart
-- Calculate total
+- Maintain pricing snapshot
 - Calls Product Service via WebClient
 
 ## Design Decisions
 - Product snapshot stored in cart
 - Prevents price inconsistency
+- Cart is system-of-record for cart state
 
 ## Tech Stack
 - Spring Boot 3
@@ -29,11 +30,11 @@ Collection: carts
 
 ## Example APIs
 
-Create Cart
+Create Cart  
 POST /carts/{userId}
 
-Add Item
+Add Item  
 POST /carts/{cartId}/items?productId={id}&quantity=1
 
-Get Cart
+Get Cart  
 GET /carts/{cartId}

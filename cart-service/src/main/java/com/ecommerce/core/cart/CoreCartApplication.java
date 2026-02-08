@@ -1,13 +1,13 @@
-package com.ecommerce.cart;
+package com.ecommerce.core.cart;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class CartServiceApplication {
+public class CoreCartApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(CartServiceApplication.class, args);
+		SpringApplication.run(CoreCartApplication.class, args);
 	}
 
 }

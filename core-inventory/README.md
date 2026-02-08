@@ -1,6 +1,6 @@
 # 📦 core-inventory
 
-Reactive Inventory Management Microservice.
+Reactive Inventory Management Microservice
 
 ## Port
 8083
